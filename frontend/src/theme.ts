@@ -236,7 +236,7 @@ function loadBrand(): SiteBrand {
       if (o?.name) return { name: String(o.name), sub: String(o.sub || '') }
     }
   } catch { /* ignore */ }
-  return { name: 'CDK Portal', sub: 'Card Platform Redeem' }
+  return { name: 'JD1688', sub: '' }
 }
 
 export const siteBrand = ref<SiteBrand>(loadBrand())
@@ -388,7 +388,7 @@ export function setSkin(id: SkinId) {
 
 export function setSiteBrand(patch: Partial<SiteBrand>) {
   siteBrand.value = {
-    name: (patch.name ?? siteBrand.value.name).trim() || 'CDK Portal',
+    name: (patch.name ?? siteBrand.value.name).trim() || 'JD1688',
     sub: (patch.sub ?? siteBrand.value.sub).trim(),
   }
   localStorage.setItem(BRAND_KEY, JSON.stringify(siteBrand.value))

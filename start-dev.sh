@@ -6,24 +6,35 @@ echo "================================================"
 echo ""
 
 # 检查环境变量文件
-if [ ! -f .env.local ]; then
-    echo "✗ 未找到 .env.local 文件"
+ENV_FILE="${ENV_FILE:-.env}"
+if [ ! -f "$ENV_FILE" ] && [ -f .env.local ]; then
+    ENV_FILE=.env.local
+fi
+if [ ! -f "$ENV_FILE" ]; then
+    echo "✗ 未找到 $ENV_FILE 或 .env.local 文件"
     exit 1
 fi
+export ENV_FILE="$(cd "$(dirname "$ENV_FILE")" && pwd)/$(basename "$ENV_FILE")"
 
 echo "✓ 环境文件已找到"
 echo ""
 
-# 检查数据库连接
-echo "检查数据库连接..."
-psql -U postgres -h localhost -d cdk_recharge -c "SELECT NOW();" >/dev/null 2>&1
-if [ $? -ne 0 ]; then
-    echo "✗ PostgreSQL 连接失败"
-    echo "  请确保 PostgreSQL 已启动，或运行:"
-    echo "  createdb cdk_recharge"
-    exit 1
+DB_DRIVER=$(sed -n 's/^DB_DRIVER=//p' "$ENV_FILE" | tail -n 1)
+if [ "$DB_DRIVER" = "postgres" ] || [ "$DB_DRIVER" = "postgresql" ] || [ "$DB_DRIVER" = "pgx" ]; then
+    echo "检查 PostgreSQL 连接..."
+    set -a
+    . "$ENV_FILE"
+    set +a
+    psql -U "${DB_USER:-postgres}" -h "${DB_HOST:-localhost}" -p "${DB_PORT:-5432}" -d "${DB_NAME:-cdk_recharge}" -c "SELECT NOW();" >/dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        echo "✗ PostgreSQL 连接失败"
+        echo "  请确保 PostgreSQL 已启动并检查 $ENV_FILE"
+        exit 1
+    fi
+    echo "✓ PostgreSQL 连接成功"
+else
+    echo "✓ 使用 SQLite 数据库"
 fi
-echo "✓ PostgreSQL 连接成功"
 
 # 检查 Redis
 redis-cli ping >/dev/null 2>&1
@@ -39,7 +50,6 @@ echo ""
 
 # 启动后端
 cd backend
-export $(cat ../.env.local | xargs)
 echo "启动后端服务 (端口 8080)..."
 go run ./cmd/server/main.go &
 BACKEND_PID=$!

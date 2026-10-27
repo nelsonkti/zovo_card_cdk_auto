@@ -14,7 +14,8 @@ RUN apt-get update \
 WORKDIR /app
 COPY --from=builder /out/server /app/server
 # SQLite 数据放到挂载卷 /app/data
-ENV DB_PATH=/app/data/cdk_recharge.db \
+ENV DB_DRIVER=sqlite \
+    DB_PATH=/app/data/cdk_recharge.db \
     SERVER_HOST=0.0.0.0 \
     SERVER_PORT=8080 \
     SERVER_MODE=release

@@ -1,43 +1,63 @@
 <template>
   <div class="u-page">
     <UserPageHeader :eyebrow="t('hero.redeemEyebrow')" :title="t('home.heroTitle')" :subtitle="t('home.heroSub')" badges />
-    <div class="u-main max-w-6xl">
-      <!-- Main Services -->
-      <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 animate-slideInUp">
-        <router-link
-          v-for="svc in services"
-          :key="svc.to"
-          :to="svc.to"
-          class="card card-hover group svc-card"
-        >
-          <span class="grid h-12 w-12 place-items-center rounded-2xl" style="background: var(--primary-soft); color: var(--primary)" v-html="svc.icon" />
-          <h3 class="mt-4 text-xl font-bold text-ink">{{ svc.title }}</h3>
-          <p class="mt-1 text-sm text-subtle">{{ svc.en }}</p>
-          <div class="mt-5 space-y-2 text-sm text-muted">
-            <div v-for="line in svc.points" :key="line" class="flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" style="color: var(--primary)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-              <span>{{ line }}</span>
-            </div>
+    <div class="u-main max-w-5xl">
+      <section class="public-start card animate-slideInUp">
+        <div class="public-start-copy">
+          <span class="public-kicker">01</span>
+          <h2 class="text-2xl font-bold text-ink">{{ services[0].title }}</h2>
+          <p class="mt-2 text-sm text-muted">{{ t('home.startHint') }}</p>
+          <router-link :to="services[0].to" class="btn-primary mt-6">{{ services[0].cta }} <span aria-hidden="true">→</span></router-link>
+        </div>
+        <div class="public-start-steps">
+          <div v-for="(line, index) in services[0].points" :key="line" class="public-mini-step">
+            <span>{{ index + 1 }}</span>
+            <p>{{ line }}</p>
           </div>
-          <div class="mt-6 text-sm font-medium app-link">{{ svc.cta }} →</div>
+        </div>
+      </section>
+
+      <div class="public-section-heading">
+        <div>
+          <span class="public-kicker">02</span>
+          <h2 class="text-xl font-bold text-ink">{{ t('home.moreTitle') }}</h2>
+        </div>
+        <p class="text-sm text-muted">{{ t('home.moreHint') }}</p>
+      </div>
+
+      <div class="grid gap-4 md:grid-cols-3 animate-slideInUp">
+        <router-link v-for="svc in secondaryServices" :key="svc.to" :to="svc.to" class="public-service card card-hover group">
+          <span class="public-service-icon" v-html="svc.icon" />
+          <div class="mt-5 flex items-start justify-between gap-3">
+            <div>
+              <h3 class="text-lg font-bold text-ink">{{ svc.title }}</h3>
+              <p class="mt-1 text-xs text-subtle">{{ svc.en }}</p>
+            </div>
+            <span class="public-arrow" aria-hidden="true">↗</span>
+          </div>
+          <p class="mt-4 text-sm leading-6 text-muted">{{ svc.points[0] }} · {{ svc.points[1] }}</p>
         </router-link>
       </div>
 
-      <!-- Flow Section -->
-      <div class="mt-16 pt-12 border-t bd">
-        <h3 class="text-2xl font-bold text-ink mb-10 text-center">{{ t('home.flowTitle') }}</h3>
-        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-          <div v-for="flow in flows" :key="flow.title" class="space-y-4">
-            <h4 class="font-bold text-ink">{{ flow.title }}</h4>
-            <div class="space-y-3 text-sm text-muted">
-              <div v-for="(step, i) in flow.steps" :key="i" class="flex gap-3">
-                <span class="grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-bold" style="background: var(--primary-soft); color: var(--primary)">{{ i + 1 }}</span>
-                <span>{{ step }}</span>
-              </div>
+      <section class="public-flow card">
+        <div class="public-section-heading !mb-6">
+          <div>
+            <span class="public-kicker">03</span>
+            <h2 class="text-xl font-bold text-ink">{{ t('home.flowTitle') }}</h2>
+          </div>
+          <p class="text-sm text-muted">{{ t('home.flowHint') }}</p>
+        </div>
+        <div class="public-flow-grid">
+          <div v-for="(flow, index) in primaryFlow" :key="flow.title" class="public-flow-item">
+            <span>{{ index + 1 }}</span>
+            <div>
+              <h3 class="font-semibold text-ink">{{ flow.title }}</h3>
+              <p class="mt-1 text-sm text-muted">{{ flow.steps[0] }}</p>
             </div>
           </div>
         </div>
-      </div>
+        <router-link :to="services[0].to" class="public-text-link">{{ t('home.startNow') }} <span aria-hidden="true">→</span></router-link>
+      </section>
     </div>
   </div>
 </template>
@@ -55,7 +75,7 @@ const services = computed(() => [
     title: t('home.services.recharge.title'),
     en: t('home.services.recharge.en'),
     cta: t('home.services.recharge.cta'),
-    icon: '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 14l2 2 4-4"/></svg>',
+    icon: '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="m9 14 2 2 4-4"/></svg>',
     points: [t('home.services.recharge.p1'), t('home.services.recharge.p2'), t('home.services.recharge.p3')],
   },
   {
@@ -84,10 +104,10 @@ const services = computed(() => [
   },
 ])
 
-const flows = computed(() => [
-  { title: t('home.flows.submit.title'), steps: [t('home.flows.submit.s1'), t('home.flows.submit.s2'), t('home.flows.submit.s3')] },
-  { title: t('home.flows.batch.title'), steps: [t('home.flows.batch.s1'), t('home.flows.batch.s2'), t('home.flows.batch.s3')] },
-  { title: t('home.flows.lookup.title'), steps: [t('home.flows.lookup.s1'), t('home.flows.lookup.s2'), t('home.flows.lookup.s3')] },
-  { title: t('home.flows.billing.title'), steps: [t('home.flows.billing.s1'), t('home.flows.billing.s2'), t('home.flows.billing.s3')] },
+const secondaryServices = computed(() => services.value.slice(1))
+const primaryFlow = computed(() => [
+  { title: t('home.flows.submit.title'), steps: [t('home.flows.submit.s1')] },
+  { title: t('home.flows.submit.s2').split(' — ')[0], steps: [t('home.flows.submit.s2')] },
+  { title: t('home.flows.submit.s3').split(' — ')[0], steps: [t('home.flows.submit.s3')] },
 ])
 </script>

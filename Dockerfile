@@ -25,6 +25,7 @@ COPY --from=frontend /src/frontend/dist /app/web
 COPY VERSION /app/VERSION
 
 ENV DB_PATH=/app/data/cdk_recharge.db \
+    DB_DRIVER=sqlite \
     WEB_DIR=/app/web \
     SERVER_HOST=0.0.0.0 \
     SERVER_PORT=8080 \

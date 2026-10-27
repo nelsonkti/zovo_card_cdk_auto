@@ -614,9 +614,17 @@ func SaveBillingInfo(c *gin.Context) {
 	}
 
 	_, err := db.DB.Exec(`
-		INSERT OR REPLACE INTO billing_records
+		INSERT INTO billing_records
 		(session_hash, account_email, subscription_status, plan_type, billing_amount, currency, next_billing_date, updated_at)
 		VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+		ON CONFLICT(session_hash) DO UPDATE SET
+			account_email = excluded.account_email,
+			subscription_status = excluded.subscription_status,
+			plan_type = excluded.plan_type,
+			billing_amount = excluded.billing_amount,
+			currency = excluded.currency,
+			next_billing_date = excluded.next_billing_date,
+			updated_at = CURRENT_TIMESTAMP
 	`, sessionHash, req.AccountEmail, req.SubscriptionStatus, req.PlanType, req.BillingAmount, currency, nextBillingValue)
 
 	if err != nil {

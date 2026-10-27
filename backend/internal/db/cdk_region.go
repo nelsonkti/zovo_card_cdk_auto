@@ -9,7 +9,7 @@ import (
 // Treating NULL as PH would mislabel old codes issued for another region.
 func migrateCardplatformCDKRegionCol() error {
 	var n int
-	if err := DB.QueryRow(`SELECT COUNT(*) FROM pragma_table_info('cardplatform_cdk_codes') WHERE name='payment_country'`).Scan(&n); err != nil {
+	if err := DB.QueryRow(columnExistsQuery("cardplatform_cdk_codes", "payment_country"), "cardplatform_cdk_codes", "payment_country").Scan(&n); err != nil {
 		return err
 	}
 	if n > 0 {

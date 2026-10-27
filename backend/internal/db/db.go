@@ -14,12 +14,14 @@ import (
 	"strings"
 	"time"
 
+	_ "github.com/jackc/pgx/v5/stdlib"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/tuzi/cdk-recharge-system/internal/config"
 	"golang.org/x/crypto/bcrypt"
 )
 
 var DB *sql.DB
+var databaseDriver = "sqlite"
 
 const (
 	DefaultAdminUsername = "admin"
@@ -28,14 +30,28 @@ const (
 )
 
 func Init(cfg *config.DatabaseConfig) error {
-	// 使用 SQLite。默认 ../data/cdk_recharge.db（相对于backend目录）；
-	// 部署/容器内可用环境变量 DB_PATH 覆盖（如 /app/data/cdk_recharge.db）。
-	dbPath := "../data/cdk_recharge.db"
-	if p := strings.TrimSpace(os.Getenv("DB_PATH")); p != "" {
-		dbPath = p
+	databaseDriver = strings.ToLower(strings.TrimSpace(cfg.Driver))
+	if databaseDriver == "postgresql" || databaseDriver == "pgx" {
+		databaseDriver = "postgres"
 	}
-	log.Printf("使用数据库: %s", dbPath)
-	db, err := sql.Open("sqlite3", dbPath)
+	var driverName, dataSource string
+	switch databaseDriver {
+	case "sqlite", "sqlite3":
+		databaseDriver = "sqlite"
+		driverName = "sqlite3"
+		dataSource = cfg.Path
+		if strings.TrimSpace(dataSource) == "" {
+			dataSource = "../data/cdk_recharge.db"
+		}
+		log.Printf("使用数据库: SQLite (%s)", dataSource)
+	case "postgres":
+		driverName = openPostgresDriver()
+		dataSource = cfg.DSN()
+		log.Printf("使用数据库: PostgreSQL (%s:%d/%s)", cfg.Host, cfg.Port, cfg.DBName)
+	default:
+		return fmt.Errorf("unsupported DB_DRIVER %q, expected sqlite or postgres", cfg.Driver)
+	}
+	db, err := sql.Open(driverName, dataSource)
 	if err != nil {
 		return err
 	}
@@ -44,11 +60,12 @@ func Init(cfg *config.DatabaseConfig) error {
 		return err
 	}
 
-	db.SetMaxOpenConns(25)
-	db.SetMaxIdleConns(5)
+	db.SetMaxOpenConns(cfg.MaxOpenConns)
+	db.SetMaxIdleConns(cfg.MaxIdleConns)
+	db.SetConnMaxLifetime(cfg.ConnMaxLifetime)
 
 	DB = db
-	log.Println("✓ SQLite 数据库连接成功: data/cdk_recharge.db")
+	log.Printf("✓ %s 数据库连接成功", strings.ToUpper(databaseDriver))
 
 	// 创建表
 	if err := createTables(); err != nil {
@@ -261,8 +278,8 @@ func createTables() error {
 	}
 
 	for _, query := range queries {
-		if _, err := DB.Exec(query); err != nil {
-			log.Printf("警告: 创建表时出错 (可能已存在): %v", err)
+		if _, err := DB.Exec(adaptSchemaQuery(query)); err != nil {
+			return fmt.Errorf("create schema: %w", err)
 		}
 	}
 
@@ -288,13 +305,31 @@ func createTables() error {
 	return nil
 }
 
+func adaptSchemaQuery(query string) string {
+	if databaseDriver != "postgres" {
+		return query
+	}
+	query = strings.ReplaceAll(query, "INTEGER PRIMARY KEY AUTOINCREMENT", "BIGSERIAL PRIMARY KEY")
+	// Keep timestamps as text to preserve the existing SQLite-compatible scan
+	// behavior (the application frequently uses COALESCE(timestamp, '')).
+	query = strings.ReplaceAll(query, "DATETIME", "TEXT")
+	return strings.ReplaceAll(query, "DEFAULT CURRENT_TIMESTAMP", "DEFAULT CURRENT_TIMESTAMP::text")
+}
+
+func columnExistsQuery(table, column string) string {
+	if databaseDriver == "postgres" {
+		return `SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = ? AND column_name = ?`
+	}
+	return `SELECT COUNT(*) FROM pragma_table_info(?) WHERE name = ?`
+}
+
 // migrateCardplatformCDKStatusCol 为已存完整码表补 status（禁用后列表要展示）。
 func migrateCardplatformCDKStatusCol() error {
 	if DB == nil {
 		return nil
 	}
 	var n int
-	err := DB.QueryRow(`SELECT COUNT(*) FROM pragma_table_info('cardplatform_cdk_codes') WHERE name='status'`).Scan(&n)
+	err := DB.QueryRow(columnExistsQuery("cardplatform_cdk_codes", "status"), "cardplatform_cdk_codes", "status").Scan(&n)
 	if err != nil || n > 0 {
 		return err
 	}
@@ -1000,12 +1035,12 @@ func cardplatformStoredWhere(plan, q, status string) (where string, args []any) 
 	}
 	if q != "" {
 		where += ` AND (
-			code LIKE ? COLLATE NOCASE
-			OR code_prefix LIKE ? COLLATE NOCASE
+			LOWER(code) LIKE LOWER(?)
+			OR LOWER(code_prefix) LIKE LOWER(?)
 			OR CAST(upstream_id AS TEXT) = ?
 			OR upstream_id IN (
 				SELECT upstream_id FROM cardplatform_cdk_notes
-				WHERE IFNULL(note, '') LIKE ? COLLATE NOCASE
+				WHERE LOWER(COALESCE(note, '')) LIKE LOWER(?)
 			)
 		)`
 		like := "%" + q + "%"
@@ -1057,7 +1092,7 @@ func ListCardplatformStoredCDKCodesPage(plan, q, status string, page, pageSize i
 		SELECT COALESCE(upstream_id,0), code, COALESCE(code_prefix,''), COALESCE(plan,''),
 		       COALESCE(fee_amount_minor,0), COALESCE(status,''), COALESCE(created_at,''), payment_country
 		FROM cardplatform_cdk_codes` + where + `
-		ORDER BY created_at DESC, rowid DESC
+		ORDER BY created_at DESC, upstream_id DESC, code DESC
 		LIMIT ? OFFSET ?`
 	args = append(args, pageSize, offset)
 	rows, err := DB.Query(sql, args...)

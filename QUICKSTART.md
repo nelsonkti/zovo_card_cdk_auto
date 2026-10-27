@@ -59,6 +59,8 @@ cd /home/tuzi/Documents/cdk-recharge-system/backend
 export SERVER_HOST=0.0.0.0
 export SERVER_PORT=8080
 export SERVER_MODE=debug
+export DB_DRIVER=sqlite
+export DB_PATH=data/cdk_recharge.db
 export DB_HOST=localhost
 export DB_PORT=5432
 export DB_USER=postgres
@@ -163,12 +165,14 @@ psql -U postgres -d cdk_recharge -c "\dt"
 
 ## 📝 环境配置
 
-所有环境变量已在 `.env.local` 中配置：
+所有环境变量可配置在项目根目录 `.env` 中（也支持直接 export）：
 
 ```env
 SERVER_HOST=0.0.0.0
 SERVER_PORT=8080
 SERVER_MODE=debug
+DB_DRIVER=sqlite
+DB_PATH=data/cdk_recharge.db
 DB_HOST=localhost
 DB_PORT=5432
 DB_USER=postgres

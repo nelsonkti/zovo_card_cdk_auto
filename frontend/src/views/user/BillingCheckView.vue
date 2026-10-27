@@ -8,13 +8,6 @@
           <button
             type="button"
             class="btn-secondary !py-1.5"
-            :class="{ 'ring-2 ring-offset-1': mode === 'cdk' }"
-            style="--tw-ring-color: var(--primary)"
-            @click="mode = 'cdk'"
-          >卡密查询</button>
-          <button
-            type="button"
-            class="btn-secondary !py-1.5"
             :class="{ 'ring-2 ring-offset-1': mode === 'session' }"
             style="--tw-ring-color: var(--primary)"
             @click="mode = 'session'"
@@ -61,7 +54,7 @@
           :disabled="loading || !canSubmit"
           @click="query"
         >
-          {{ loading ? '查询中…' : '查询订阅与账单' }}
+          {{ loading ? '查询中…' : '查询订阅' }}
         </button>
       </div>
 
@@ -123,7 +116,7 @@ const { t } = useI18n({ useScope: 'global' })
 
 
 const route = useRoute()
-const mode = ref<'cdk' | 'session'>('cdk')
+const mode = ref<'cdk' | 'session'>('session')
 const cdkCode = ref('')
 const tokenInput = ref('')
 const loading = ref(false)

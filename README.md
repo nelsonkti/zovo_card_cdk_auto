@@ -120,13 +120,19 @@ cdk-recharge-system/
 
 ## 环境变量配置
 
-### 后端 (.env 或环境变量)
+### 后端（项目根目录 `.env` 或环境变量）
 
 ```env
 SERVER_HOST=0.0.0.0
 SERVER_PORT=8080
 SERVER_MODE=debug
 
+# sqlite 或 postgres
+DB_DRIVER=sqlite
+# SQLite 使用；相对路径按 `.env` 所在项目根目录解析
+DB_PATH=data/cdk_recharge.db
+
+# DB_DRIVER=postgres 时使用以下配置
 DB_HOST=localhost
 DB_PORT=5432
 DB_USER=postgres

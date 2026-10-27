@@ -67,10 +67,11 @@ func InsertCardFailEvent(ev CardFailEvent) (inserted bool, err error) {
 	}
 
 	res, err := DB.Exec(`
-		INSERT OR IGNORE INTO card_fail_events
+		INSERT INTO card_fail_events
 			(card_id, card_last_four, order_id, cdk_code, account_email_norm, email_source,
 			 error_code, order_status, verdict, created_at)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+		ON CONFLICT(order_id, card_id) DO NOTHING
 	`, ev.CardID, ev.CardLastFour, ev.OrderID, ev.CDKCode, ev.AccountEmailNorm, ev.EmailSource,
 		ev.ErrorCode, ev.OrderStatus, ev.Verdict)
 	if err != nil {
@@ -304,4 +305,3 @@ func DefaultCardHealthPolicy() CardHealthPolicy {
 		RequireKnownEmail: true,
 	}
 }
-
