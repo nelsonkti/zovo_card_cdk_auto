@@ -10,7 +10,6 @@
 *.out
 
 # Build directories
-dist/
 build/
 bin/
 
@@ -76,4 +75,3 @@ backend/cdk-recharge
 # release artifacts
 cdk-bundle*.tgz
 cdk-bundle*.sha256
-dist/

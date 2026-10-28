@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" content="#0c0c11" />
+    <title>JD1688</title>
+    <!-- 字体按皮肤由 theme.ts 按需加载（不阻塞首屏）；这里只预连 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <style>
+      /* 样式表到达前的首屏底色，避免夜间模式先闪一下白 */
+      /* 只给 html：body 要保持透明，否则会盖住主题的固定氛围层 */
+      /* :where() 零特异性：样式表一到，各皮肤自己的底色就能覆盖它 */
+      :where(html.dark) { background: #0c0c11; color: #f4f1ea; }
+    </style>
+    <script>
+      (function () {
+        try {
+          // 默认：卡台新版(zovo) + 夜间。与 theme.ts、后端 /public/site 的默认值保持一致
+          var mode = localStorage.getItem('theme-mode') || 'dark'
+          var skin = localStorage.getItem('site-skin') || 'zovo'
+          var dark =
+            mode === 'dark' ||
+            (mode === 'auto' &&
+              window.matchMedia &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches)
+          // preferDark 皮肤默认暗色，减少首屏闪白
+          if (skin === 'cyber' || skin === 'ember' || skin === 'noir') dark = true
+          if (dark) document.documentElement.classList.add('dark')
+          document.documentElement.setAttribute('data-skin', skin)
+          var layoutMap = { cyber: 'sidebar', slate: 'rail' }
+          document.documentElement.setAttribute('data-layout', layoutMap[skin] || 'top')
+        } catch (e) {}
+      })()
+    </script>
+    <script type="module" crossorigin src="/assets/index-DdFXRSVa.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/vendor-vue-RNvOi5CA.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-element-CX5QP2tj.js">
+    <link rel="stylesheet" crossorigin href="/assets/vendor-element-dy0VYFTZ.css">
+    <link rel="stylesheet" crossorigin href="/assets/index-Bgo9GZA6.css">
+  </head>
+  <body>
+    <div id="app"></div>
+  </body>
+</html>
